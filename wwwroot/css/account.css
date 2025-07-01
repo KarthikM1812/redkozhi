@@ -1,0 +1,73 @@
+﻿body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+.account-container {
+    background-image: url('/images/register.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.account-box {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    opacity: 0.95;
+}
+
+    .account-box h2 {
+        font-weight: 600;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .account-box label {
+        font-weight: 500;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .account-box input[type="text"],
+    .account-box input[type="email"],
+    .account-box input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    .account-box input[type="checkbox"] {
+        margin-right: 5px;
+    }
+
+.btn-success {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 10px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+.text-danger {
+    color: red;
+    font-size: 0.9rem;
+}

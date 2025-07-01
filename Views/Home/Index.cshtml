@@ -1,0 +1,66 @@
+﻿@model IEnumerable<ChickenWeb.Models.MenuItem>
+
+@{
+    ViewData["Title"] = "Our Menu";
+}
+
+<!-- ✅ Hero Section -->
+<div class="menu-hero">
+    <div class="hero-content">
+        <h1>Welcome to The Crispy Coop</h1>
+        <p>Freshly Fried. Boldly Spiced. Delivered Hot.</p>
+        <a class="explore-btn btn btn-warning" href="#menu">Order Now</a>
+    </div>
+</div>
+
+<!-- ✅ Grid Menu Section -->
+<section class="menu-grid-section">
+    <h2 class="heading">🍽️ Our Delicious Menu</h2>
+
+    <div class="menu-grd">
+        @foreach (var item in Model.Where(m => m.Type?.ToLower() == "main course"))
+        {
+            <div class="m-card" data-name="@item.Name" data-price="@item.Price">
+                <img src="@item.Image" alt="@item.Name" class="m-img" />
+                <div class="m-info">
+                    <h3 class="m-title">@item.Name</h3>
+                    <div class="m-type">
+                        <span class="nv-icon">🔺</span>
+                        <span class="nv-text">Non veg</span>
+                    </div>
+                    <p class="m-price">₹@item.Price</p>
+                    <p class="m-desc">Get 2 piece @item.Name</p>
+                </div>
+                <button class="m-btn">
+                    Add to cart <span class="m-icon">🛒</span>
+                </button>
+            </div>
+
+        }
+    </div>
+</section>
+
+<!-- ✅ Scrolling Snacks Section -->
+<div class="scroll-section d-flex overflow-auto p-3 bg-light" style="gap: 1rem;">
+    @foreach (var item in Model.Where(m => m.Type?.ToLower() == "snack"))
+    {
+        <div class="item-card border p-2 rounded bg-white text-center"
+             data-id="@item.Id"
+             data-name="@item.Name"
+             data-price="@item.Price"
+             data-image="@item.Image"
+             style="min-width: 200px; max-width: 220px;">
+
+            <img src="@item.Image" class="img-fluid mb-2" style="height: 100px; object-fit: cover;" onerror="this.src='/images/placeholder.jpg'" />
+
+            <h6>@item.Name</h6>
+            <p class="text-muted">₹@item.Price</p>
+            <button class="btn btn-sm btn-primary add-to-cart">Add to Cart</button>
+        </div>
+    }
+</div>
+
+
+
+<script src="~/js/script.js"></script>
+
