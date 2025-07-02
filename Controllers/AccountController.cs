@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace UsersApp.Controllers
+namespace ChickenWeb.Controllers
 {
     public class AccountController : Controller
     {

@@ -1,4 +1,4 @@
-﻿// HomeController.cs (Corrected without changing structure)
+﻿
 using ChickenWeb.Data;
 using ChickenWeb.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +28,12 @@ namespace ChickenWeb.Controllers
         {
             return View();
         }
+
+        public IActionResult About()
+        {
+            return View();
+        }
+
         [HttpPost]
         public IActionResult SubmitOrder([FromBody] OrderRequest request)
         {
