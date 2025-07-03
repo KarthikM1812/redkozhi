@@ -1,6 +1,7 @@
 ﻿
-using ChickenWeb.Data;
-using ChickenWeb.Models;
+
+using ChickenWeb.Domain.Interfaces.IHome;
+using ChickenWeb.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,18 +12,19 @@ namespace ChickenWeb.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IHomeService _context;
 
-        public HomeController(AppDbContext context)
+        public HomeController(IHomeService context)
         {
             _context = context;
         }
 
         public IActionResult Index()
         {
-            var menuItems = _context.MenuItems.ToList();
+            var menuItems = _context.GetMenuItems;
             return View(menuItems);
         }
+
         [Authorize]
         public IActionResult Order()
         {
@@ -35,32 +37,17 @@ namespace ChickenWeb.Controllers
         }
 
         [HttpPost]
-        public IActionResult SubmitOrder([FromBody] OrderRequest request)
+        public async Task<IActionResult> SubmitOrder([FromBody] OrderRequest request)
+
         {
             if (request == null || request.Cart == null || !request.Cart.Any())
                 return BadRequest("Cart is empty");
 
             var userEmail = User.Identity?.Name ?? "Guest";
 
-            foreach (var item in request.Cart)
-            {
-                var order = new OrderItem
-                {
-                    Name = request.Name,
-                    Phone = request.Phone,
-                    Address = request.Address,
-                    Notes = request.Notes,
-                    ItemName = item.Name,
-                    Price = item.Price,
-                    Quantity = item.Quantity,
-                    OrderedAt = DateTime.Now,
-                    UserEmail = userEmail
-                };
+            await _context.ProcessOrderRequest(request, userEmail);
 
-                _context.OrderItems.Add(order);
-            }
-
-            _context.SaveChanges();
+            //_context.SaveChanges();
             return Ok(new { orderId = DateTime.Now.Ticks }); // Temporary orderId
         }
 
@@ -71,7 +58,7 @@ namespace ChickenWeb.Controllers
                 return RedirectToAction("Login", "Account");
 
             var latestTime = _context.OrderItems
-                .Where(o => o.UserEmail == userEmail)
+                .Where(o => o.userEmail == userEmail)
                 .OrderByDescending(o => o.OrderedAt)
                 .Select(o => o.OrderedAt)
                 .FirstOrDefault();

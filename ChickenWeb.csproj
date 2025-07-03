@@ -16,7 +16,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Data\" />
     <Folder Include="wwwroot\images\menu\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ChickenWeb.DataAccess\ChickenWeb.DataAccess.csproj" />
+    <ProjectReference Include="..\ChickenWeb.Domain\ChickenWeb.Domain.csproj" />
   </ItemGroup>
 
 </Project>

@@ -54,7 +54,7 @@ namespace ChickenWeb.Controllers
             {
                 Users users = new Users
                 {
-                    FullName = model.Name,         // ✅ Saving full name
+                    FullName = model.FullName,         // ✅ Saving full name
                     Email = model.Email,
                     UserName = model.Email
                 };
@@ -64,7 +64,7 @@ namespace ChickenWeb.Controllers
                 if (result.Succeeded)
                 {
                     // Add FullName claim
-                    await userManager.AddClaimAsync(users, new Claim("FullName", model.Name));
+                    await userManager.AddClaimAsync(users, new Claim("FullName", model.FullName));
 
                     // Automatically log in the user
                     await signInManager.SignInAsync(users, isPersistent: false);
