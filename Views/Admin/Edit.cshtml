@@ -1,26 +1,59 @@
-﻿@model ChickenWeb.Models.MenuItem
-<h2>Add Menu Item</h2>
-<form asp-action="Create" method="post" enctype="multipart/form-data">
-    <div class="mb-3">
-        <label>Name</label>
-        <input asp-for="Name" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Spices</label>
-        <input asp-for="Spices" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Price</label>
-        <input asp-for="Price" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Type</label>
-        <input asp-for="Type" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Image</label>
-        <input type="file" name="imageFile" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
+﻿@model ChickenWeb.Domain.Entities.MenuItem
 
+@{
+    ViewData["Title"] = "Edit Menu Item";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Use your layout if any
+}
+
+<h2 class="mb-4">Edit Menu Item</h2>
+
+<form asp-action="Edit" enctype="multipart/form-data" method="post">
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.Id)
+
+    <div class="form-group mb-3">
+        <label>Name</label>
+        @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "required" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Price (₹)</label>
+        @Html.TextBoxFor(m => m.Price, new { @class = "form-control", type = "number", step = "0.01", required = "required" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Spices</label>
+        @Html.TextBoxFor(m => m.Spices, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Type</label>
+        @Html.TextBoxFor(m => m.Type, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Stock (Add/Update Quantity)</label>
+        @Html.TextBoxFor(m => m.QuantityAvailable, new { @class = "form-control", type = "number", required = "required" })
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Change Image (optional)</label>
+        <input type="file" name="imageFile" class="form-control" />
+        @if (!string.IsNullOrEmpty(Model.Image))
+        {
+            <div class="mt-2">
+                <p>Current Image:</p>
+                <img src="@Model.Image" alt="Item Image" style="max-width: 150px;" />
+            </div>
+        }
+    </div>
+
+    <div class="form-group">
+        <button type="submit" class="btn btn-success">Save Changes</button>
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+
+    <div class="text-danger mt-2">
+        @Html.ValidationSummary()
+    </div>
+</form>

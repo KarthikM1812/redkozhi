@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ChickenWeb.Models.MenuItem>
+﻿@model IEnumerable<ChickenWeb.Domain.Entities.MenuItem>
 
 @{
     ViewData["Title"] = "Our Menu";
@@ -15,12 +15,17 @@
 
 <!-- ✅ Grid Menu Section -->
 <section class="menu-grid-section">
-    <h2 class="heading">🍽️ Our Delicious Menu</h2>
+    <h2 class="heading"> Our Delicious Menu</h2>
 
     <div class="menu-grd">
         @foreach (var item in Model.Where(m => m.Type?.ToLower() == "main course"))
         {
-            <div class="m-card" data-name="@item.Name" data-price="@item.Price">
+            <div class="m-card"
+                 data-name="@item.Name"
+                 data-price="@item.Price"
+                 data-stock="@item.QuantityAvailable">
+                <!-- ✅ Corrected -->
+
                 <img src="@item.Image" alt="@item.Name" class="m-img" />
                 <div class="m-info">
                     <h3 class="m-title">@item.Name</h3>
@@ -31,11 +36,8 @@
                     <p class="m-price">₹@item.Price</p>
                     <p class="m-desc">Get 2 piece @item.Name</p>
                 </div>
-                <button class="m-btn">
-                    Add to carts <span class="m-icon">🛒</span>
-                </button>
+                <button class="m-btn">Add to cart <span class="m-icon">🛒</span></button>
             </div>
-
         }
     </div>
 </section>
@@ -48,11 +50,10 @@
              data-id="@item.Id"
              data-name="@item.Name"
              data-price="@item.Price"
-             data-image="@item.Image"
+             data-stock="@item.QuantityAvailable"
              style="min-width: 200px; max-width: 220px;">
 
             <img src="@item.Image" class="img-fluid mb-2" style="height: 100px; object-fit: cover;" onerror="this.src='/images/placeholder.jpg'" />
-
             <h6>@item.Name</h6>
             <p class="text-muted">₹@item.Price</p>
             <button class="btn btn-sm btn-primary add-to-cart">Add to Cart</button>
@@ -60,7 +61,8 @@
     }
 </div>
 
+<!-- ✅ Alert banner for feedback -->
+<div id="alertBanner" class="alert d-none mt-3"></div>
 
-
+<!-- ✅ Include JavaScript -->
 <script src="~/js/script.js"></script>
-

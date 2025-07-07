@@ -1,99 +1,88 @@
-﻿using ChickenWeb.Models;
+﻿using ChickenWeb.Domain.Interfaces.IAccount;
+using ChickenWeb.Models;
 using ChickenWeb.ViewModels;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using System;
+using System.Threading.Tasks;
 
 namespace ChickenWeb.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly SignInManager<Users> signInManager;
-        private readonly UserManager<Users> userManager;
+        private readonly IAccountService _accountService;
 
-        public AccountController(SignInManager<Users> signInManager, UserManager<Users> userManager)
+        public AccountController(IAccountService accountService)
         {
-            this.signInManager = signInManager;
-            this.userManager = userManager;
+            _accountService = accountService;
         }
 
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [HttpPost]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var result = await signInManager.PasswordSignInAsync(model.Email, model.Password, model.Rememberme, false);
+                try
+                {
+                    var success = await _accountService.LoginAsync(model.Email, model.Password, model.Rememberme);
+                    if (success)
+                        return RedirectToAction("Index", "Home");
 
-                if (result.Succeeded)
-                {
-                    return RedirectToAction("Index", "Home");
-                }
-                else
-                {
                     ModelState.AddModelError("", "Email or password is incorrect.");
-                    return View(model);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"An error occurred: {ex.Message}");
                 }
             }
             return View(model);
         }
 
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
 
         [HttpPost]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
-                Users users = new Users
+                try
                 {
-                    FullName = model.FullName,         // ✅ Saving full name
-                    Email = model.Email,
-                    UserName = model.Email
-                };
+                    var success = await _accountService.RegisterAsync(model.FullName, model.Email, model.Password);
+                    if (success)
+                        return RedirectToAction("Index", "Home");
 
-                var result = await userManager.CreateAsync(users, model.Password);
-
-                if (result.Succeeded)
-                {
-                    // Add FullName claim
-                    await userManager.AddClaimAsync(users, new Claim("FullName", model.FullName));
-
-                    // Automatically log in the user
-                    await signInManager.SignInAsync(users, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
+                    ModelState.AddModelError("", "Registration failed.");
                 }
-
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"An error occurred: {ex.Message}");
+                }
             }
             return View(model);
         }
 
-        public IActionResult VerifyEmail()
-        {
-            return View();
-        }
+        public IActionResult VerifyEmail() => View();
 
         [HttpPost]
         public async Task<IActionResult> VerifyEmail(VerifyViewModel model)
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.FindByNameAsync(model.Email);
-                if (user == null)
+                try
                 {
-                    ModelState.AddModelError("", "Something is wrong!");
-                    return View(model);
-                }
-                else
-                {
+                    var user = await _accountService.GetUserByEmailAsync(model.Email);
+                    if (user == null)
+                    {
+                        ModelState.AddModelError("", "Email not found.");
+                        return View(model);
+                    }
+
                     return RedirectToAction("ChangePassword", "Account", new { username = user.UserName });
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"An error occurred: {ex.Message}");
                 }
             }
             return View(model);
@@ -102,9 +91,8 @@ namespace ChickenWeb.Controllers
         public IActionResult ChangePassword(string username)
         {
             if (string.IsNullOrEmpty(username))
-            {
                 return RedirectToAction("VerifyEmail", "Account");
-            }
+
             return View(new ChangePasswordViewModel { Email = username });
         }
 
@@ -113,40 +101,33 @@ namespace ChickenWeb.Controllers
         {
             if (ModelState.IsValid)
             {
-                var user = await userManager.FindByNameAsync(model.Email);
-                if (user != null)
+                try
                 {
-                    var result = await userManager.RemovePasswordAsync(user);
-                    if (result.Succeeded)
-                    {
-                        result = await userManager.AddPasswordAsync(user, model.NewPassword);
+                    var success = await _accountService.ChangePasswordAsync(model.Email, model.NewPassword);
+                    if (success)
                         return RedirectToAction("Login", "Account");
-                    }
-                    else
-                    {
-                        foreach (var error in result.Errors)
-                        {
-                            ModelState.AddModelError("", error.Description);
-                        }
-                        return View(model);
-                    }
+
+                    ModelState.AddModelError("", "Unable to change password.");
                 }
-                else
+                catch (Exception ex)
                 {
-                    ModelState.AddModelError("", "Email not found!");
-                    return View(model);
+                    ModelState.AddModelError("", $"An error occurred: {ex.Message}");
                 }
             }
-            else
-            {
-                ModelState.AddModelError("", "Something went wrong. Try again.");
-                return View(model);
-            }
+            return View(model);
         }
 
         public async Task<IActionResult> Logout()
         {
-            await signInManager.SignOutAsync();
+            try
+            {
+                await _accountService.LogoutAsync();
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Logout failed: {ex.Message}";
+            }
+
             return RedirectToAction("Index", "Home");
         }
     }

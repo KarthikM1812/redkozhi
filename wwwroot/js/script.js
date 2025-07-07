@@ -1,10 +1,10 @@
-﻿// ✅ Load cart or initialize empty
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+﻿// Initialize cart
+let cart = JSON.parse(sessionStorage.getItem('cart')) || [];
 
-// ✅ Check login status from layout meta tag
+// Check if user is logged in via meta tag
 const isLoggedIn = document.querySelector('meta[name="user-authenticated"]')?.content === "true";
 
-// ✅ Show alert banner
+// Show alert banner
 function showBanner(message, type = "warning") {
     const banner = document.getElementById("alertBanner");
     if (!banner) return;
@@ -14,7 +14,7 @@ function showBanner(message, type = "warning") {
     setTimeout(() => banner.classList.add("d-none"), 3000);
 }
 
-// ✅ Render cart on order page
+// Render cart summary table
 function renderCart() {
     const cartContainer = document.getElementById('cartSummary');
     if (!cartContainer) return;
@@ -24,15 +24,13 @@ function renderCart() {
         return;
     }
 
-    let html = "<table class='table table-striped'><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr></thead><tbody>";
+    let html = `<table class='table table-striped'>
+<thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th><th>Action</th></tr></thead><tbody>`;
     let total = 0;
 
     cart.forEach(item => {
-        if (!item.name || !item.price || !item.quantity) return;
-
         const subTotal = item.price * item.quantity;
         total += subTotal;
-
         html += `<tr>
             <td>${item.name}</td>
             <td>${item.quantity}</td>
@@ -46,111 +44,130 @@ function renderCart() {
     cartContainer.innerHTML = html;
 }
 
-// ✅ Update UI cart quantities (for both grid + scroll)
+// Update quantity badges in UI
 function updateUI() {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-    // Scroll section
-    $('.scroll-section .item-card').each(function () {
+    $('.menu-grd .m-card').each(function () {
         const name = $(this).data('name');
         const found = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
         $(this).find('.cart-qty').text(found ? found.quantity : '');
     });
 
-    // Menu grid
-    $('.menu-grd .m-card').each(function () {
-        const name = $(this).find('.m-title').text().trim();
+    $('.scroll-section .item-card').each(function () {
+        const name = $(this).data('name');
         const found = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
         $(this).find('.cart-qty').text(found ? found.quantity : '');
     });
 }
 
-// ✅ Add to cart from menu grid
+// Update cart count in header
+function renderCartCount() {
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const span = document.getElementById('cart-count');
+    if (span) span.textContent = count;
+}
+
+// Add to cart from menu grid
 $(document).on('click', '.m-btn', function () {
     if (!isLoggedIn) {
-        showBanner("Please login to add items to cart.", "danger");
+        showBanner("Please login to add items to cart", "danger");
         return;
     }
 
     const card = $(this).closest('.m-card');
-    const name = card.find('.m-title').text().trim();
-    const price = parseFloat(card.find('.m-price').text().replace('₹', '').trim());
+    const name = card.data('name');
+    const price = parseFloat(card.data('price'));
+    const available = parseInt(card.data('stock') || 0);
 
     if (!name || isNaN(price)) {
-        showBanner("Invalid item data.", "danger");
+        showBanner("Invalid item", "warning");
         return;
     }
 
-    const existing = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-        existing.quantity++;
+    const found = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
+
+    if (found) {
+        if (found.quantity >= available) {
+            showBanner("Out of stock!", "warning");
+            return;
+        }
+        found.quantity++;
     } else {
+        if (available <= 0) {
+            showBanner("Out of stock!", "warning");
+            return;
+        }
         cart.push({ name, price, quantity: 1 });
     }
 
-    localStorage.setItem('cart', JSON.stringify(cart));
-    showBanner(`${name} added to cart!`, "success");
+    sessionStorage.setItem('cart', JSON.stringify(cart));
     renderCart();
     updateUI();
+    renderCartCount();
+    showBanner(`${name} added to cart`, "success");
 });
 
-// ✅ Add to cart from scroll section
+// Add to cart from scroll section
 $(document).on('click', '.scroll-section .add-to-cart', function () {
     if (!isLoggedIn) {
-        showBanner("Please login to add items to cart.", "danger");
+        showBanner("Login first", "danger");
         return;
     }
 
     const card = $(this).closest('.item-card');
     const name = card.data('name');
     const price = parseFloat(card.data('price'));
+    const available = parseInt(card.data('stock') || 0);
 
     if (!name || isNaN(price)) {
-        showBanner("Invalid item data.", "danger");
+        showBanner("Invalid item", "warning");
         return;
     }
 
-    const existing = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
-    if (existing) {
-        existing.quantity++;
+    const found = cart.find(item => item.name.toLowerCase() === name.toLowerCase());
+
+    if (found) {
+        if (found.quantity >= available) {
+            showBanner("Out of stock!", "warning");
+            return;
+        }
+        found.quantity++;
     } else {
+        if (available <= 0) {
+            showBanner("Out of stock!", "warning");
+            return;
+        }
         cart.push({ name, price, quantity: 1 });
     }
 
-    localStorage.setItem('cart', JSON.stringify(cart));
-    showBanner(`${name} added to cart!`, "success");
+    sessionStorage.setItem('cart', JSON.stringify(cart));
     renderCart();
     updateUI();
+    renderCartCount();
+    showBanner(`${name} added to cart`, "success");
 });
 
-// ✅ Remove item from cart
+// Remove item from cart
 $(document).on('click', '.remove-btn', function () {
     const name = $(this).data('name');
-    cart = cart.filter(item => item.name && item.name.toLowerCase() !== name.toLowerCase());
-    localStorage.setItem('cart', JSON.stringify(cart));
+    cart = cart.filter(item => item.name.toLowerCase() !== name.toLowerCase());
+    sessionStorage.setItem('cart', JSON.stringify(cart));
     renderCart();
     updateUI();
+    renderCartCount();
 });
 
-// ✅ Render cart count in header (if applicable)
-function renderCartCount() {
-    const countSpan = document.getElementById("cart-count");
-    if (!countSpan) return;
-    const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-    countSpan.textContent = totalCount;
-}
-
-// ✅ Submit order (for /Order page)
+// On page ready, initialize
 $(document).ready(function () {
     renderCart();
     updateUI();
     renderCartCount();
 
+    // Handle order submission
     $('#orderForm').submit(function (e) {
         e.preventDefault();
 
         if (!isLoggedIn) {
-            showBanner("Please login before placing order.", "danger");
+            showBanner("Please login to place order.", "danger");
             return;
         }
 
@@ -159,31 +176,36 @@ $(document).ready(function () {
             return;
         }
 
-        const orderData = {
-            name: $('#name').val(),
-            phone: $('#phone').val(),
-            address: $('#address').val(),
-            notes: $('#notes').val(),
+        const data = {
+            name: $('#name').val()?.trim(),
+            phone: $('#phone').val()?.trim(),
+            address: $('#address').val()?.trim(),
+            notes: $('#notes').val()?.trim(),
             cart: cart
         };
 
-        if (!orderData.name || !orderData.phone || !orderData.address) {
+        if (!data.name || !data.phone || !data.address) {
             showBanner("Please fill all required fields.", "warning");
             return;
         }
 
         $.ajax({
             url: '/Home/SubmitOrder',
-            type: 'POST',
+            method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify(orderData),
+            data: JSON.stringify(data),
             success: function (res) {
-                localStorage.removeItem('cart');
+                sessionStorage.removeItem('cart');
                 showBanner("Order placed successfully!", "success");
-                window.location.href = '/Home/OrderSummary?orderId=' + res.orderId;
+
+                if (res.redirectUrl)
+                    window.location.href = res.redirectUrl;
+                else
+                    window.location.href = '/Home/OrderSummary';
             },
-            error: function () {
-                showBanner("Failed to submit order. Try again.", "danger");
+            error: function (xhr) {
+                console.error(xhr.responseText);
+                showBanner("Failed to place order. " + (xhr.responseText || ""), "danger");
             }
         });
     });

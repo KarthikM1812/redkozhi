@@ -1,12 +1,12 @@
-﻿
-
+﻿using ChickenWeb.Domain.Entities;
 using ChickenWeb.Domain.Interfaces.IHome;
-using ChickenWeb.Domain.Entities;
+using ChickenWeb.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
 using System.Diagnostics;
-
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ChickenWeb.Controllers
 {
@@ -19,9 +19,9 @@ namespace ChickenWeb.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var menuItems = _context.GetMenuItems;
+            var menuItems = await _context.GetMenuItems();
             return View(menuItems);
         }
 
@@ -38,57 +38,58 @@ namespace ChickenWeb.Controllers
 
         [HttpPost]
         public async Task<IActionResult> SubmitOrder([FromBody] OrderRequest request)
-
         {
-            if (request == null || request.Cart == null || !request.Cart.Any())
-                return BadRequest("Cart is empty");
+            try
+            {
+                var userEmail = User.Identity?.Name ?? "Guest";
+                var groupKey = Guid.NewGuid().ToString();
+                var createdAt = DateTime.Now;
 
-            var userEmail = User.Identity?.Name ?? "Guest";
+                await _context.SubmitOrderAsync(request, userEmail, groupKey, createdAt);
 
-            await _context.ProcessOrderRequest(request, userEmail);
-
-            //_context.SaveChanges();
-            return Ok(new { orderId = DateTime.Now.Ticks }); // Temporary orderId
+                // ✅ Return the redirect URL back to JavaScript
+                return Ok(new
+                {
+                    redirectUrl = Url.Action("OrderSummary", "Home", new { orderId = groupKey })
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest("Argument error: " + ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Server error: " + ex.Message);
+            }
         }
 
-        public IActionResult OrderSummary()
+        [HttpGet]
+        public async Task<IActionResult> OrderSummary(string orderId)
         {
-            var userEmail = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userEmail))
-                return RedirectToAction("Login", "Account");
+            var userEmail = User.Identity?.Name ?? "Guest";
 
-            var latestTime = _context.OrderItems
-                .Where(o => o.userEmail == userEmail)
-                .OrderByDescending(o => o.OrderedAt)
-                .Select(o => o.OrderedAt)
-                .FirstOrDefault();
+            var items = await _context.GetOrderItemsByGroupKey(orderId);
 
-            if (latestTime == default)
-                return NotFound("No recent orders found.");
+            if (items == null || !items.Any())
+                return Content("No recent orders found."); // Fallback message
 
-            var items = _context.OrderItems
-                .Where(o => o.UserEmail == userEmail && o.OrderedAt == latestTime)
-                .ToList();
-
-            var summary = new OrderSummaryViewModel
+            var model = new OrderSummary
             {
                 Name = items.First().Name,
                 Phone = items.First().Phone,
                 Address = items.First().Address,
                 Notes = items.First().Notes,
-                OrderDate = latestTime,
+                OrderDate = items.First().CreatedAt,
                 Items = items.Select(i => new CartItem
                 {
                     Name = i.ItemName,
-                    Price = i.Price,
-                    Quantity = i.Quantity
+                    Quantity = i.Quantity,
+                    Price = i.Price
                 }).ToList()
             };
 
-            return View(summary);
+            return View(model);
         }
-
-        
 
         public IActionResult Privacy()
         {

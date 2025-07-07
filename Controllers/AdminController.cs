@@ -1,19 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Identity;
-using ChickenWeb.Models;
-using ChickenWeb.Data;
+﻿using ChickenWeb.Domain.Entities;
+using ChickenWeb.Domain.Interfaces.IAdmin;
 using Microsoft.AspNetCore.Http;
-using System.IO;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace ChickenWeb.Controllers
 {
     public class AdminController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IAdminService _adminService;
 
-        public AdminController(AppDbContext context)
+        public AdminController(IAdminService adminService)
         {
-            _context = context;
+            _adminService = adminService;
         }
 
         private bool IsAdminLoggedIn()
@@ -21,128 +20,108 @@ namespace ChickenWeb.Controllers
             return HttpContext.Session.GetString("AdminLoggedIn") == "true";
         }
 
+        // Login GET
         public IActionResult Login() => View();
 
+        // Login POST
         [HttpPost]
-        public IActionResult Login(string email, string password)
+        public async Task<IActionResult> Login(string email, string password)
         {
-            var admin = _context.Admins.FirstOrDefault(a => a.Email == email);
-            if (admin == null)
+            var (isValid, admin) = await _adminService.ValidateLoginAsync(email, password);
+            if (!isValid || admin == null)
             {
-                ViewBag.Error = "Invalid email";
+                ViewBag.Error = "Invalid credentials.";
                 return View();
             }
 
-            var hasher = new PasswordHasher<Admin>();
-            var result = hasher.VerifyHashedPassword(admin, admin.PasswordHash, password);
-            if (result == PasswordVerificationResult.Success)
-            {
-                HttpContext.Session.SetString("AdminLoggedIn", "true");
-                return RedirectToAction("Index");
-            }
-
-            ViewBag.Error = "Invalid password";
-            return View();
+            HttpContext.Session.SetString("AdminLoggedIn", "true");
+            return RedirectToAction("Index");
         }
 
+        // Logout
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Login");
         }
 
-        public IActionResult Index()
+        // Admin Dashboard
+        public async Task<IActionResult> Index()
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
-            return View(_context.MenuItems.ToList());
+
+            var items = await _adminService.GetMenuItemsAsync();
+            return View(items);
         }
 
+        // Create GET
         public IActionResult Create()
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
             return View();
         }
 
+        // Create POST
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(MenuItem item, IFormFile imageFile)
+        public async Task<IActionResult> Create(MenuItem item, IFormFile? imageFile)
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
 
             if (!ModelState.IsValid)
+                return View(item);
+
+            try
             {
-                return View(item); // prevents adding invalid data
+                await _adminService.CreateMenuItemAsync(item, imageFile);
+                return RedirectToAction("Index");
             }
-
-            if (imageFile != null && imageFile.Length > 0)
+            catch (ApplicationException ex)
             {
-                var fileName = Path.GetFileName(imageFile.FileName);
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/menu");
-                Directory.CreateDirectory(folderPath); // ensures folder exists
-
-                var fullPath = Path.Combine(folderPath, fileName);
-                using (var stream = new FileStream(fullPath, FileMode.Create))
-                {
-                    imageFile.CopyTo(stream);
-                }
-
-                item.Image = "/images/menu/" + fileName;
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(item);
             }
-
-            _context.MenuItems.Add(item);
-            _context.SaveChanges();
-            return RedirectToAction("Index");
         }
 
-
-        public IActionResult Edit(int id)
+        // Edit GET
+        public async Task<IActionResult> Edit(int id)
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
-            var item = _context.MenuItems.Find(id);
+
+            var item = await _adminService.GetMenuItemAsync(id);
+            if (item == null) return NotFound();
+
             return View(item);
         }
 
+        // Edit POST
         [HttpPost]
-        public IActionResult Edit(MenuItem item, IFormFile imageFile)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(MenuItem item, IFormFile? imageFile)
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
 
-            var existing = _context.MenuItems.Find(item.Id);
-            if (existing == null) return NotFound();
+            if (!ModelState.IsValid)
+                return View(item);
 
-            if (imageFile != null && imageFile.Length > 0)
+            try
             {
-                var fileName = Path.GetFileName(imageFile.FileName);
-                var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/menu");
-                Directory.CreateDirectory(folderPath);
-
-                var path = Path.Combine(folderPath, fileName);
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    imageFile.CopyTo(stream);
-                }
-
-                existing.Image = "/images/menu/" + fileName;
+                await _adminService.EditMenuItemAsync(item, imageFile);
+                return RedirectToAction("Index");
             }
-
-            existing.Name = item.Name;
-            existing.Spices = item.Spices;
-            existing.Price = item.Price;
-            existing.Type = item.Type;
-
-            _context.SaveChanges();
-            return RedirectToAction("Index");
+            catch (ApplicationException ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                return View(item);
+            }
         }
 
-        public IActionResult Delete(int id)
+        // Delete
+        public async Task<IActionResult> Delete(int id)
         {
             if (!IsAdminLoggedIn()) return RedirectToAction("Login");
 
-            var item = _context.MenuItems.Find(id);
-            if (item == null) return NotFound();
-
-            _context.MenuItems.Remove(item);
-            _context.SaveChanges();
+            await _adminService.DeleteMenuItemAsync(id);
             return RedirectToAction("Index");
         }
     }

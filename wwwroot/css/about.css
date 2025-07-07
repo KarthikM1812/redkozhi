@@ -1,6 +1,6 @@
 ﻿/* Hero Section */
 .about-hero {
-    background-image: url('/images/about-banner.jpg');
+    background-image: url('/images/top-view-burger-orange-background.jpg');
     background-size: cover;
     background-position: center;
     height: 300px;
@@ -12,6 +12,7 @@
     font-weight: 700;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
 }
+
 
 /* Main Container */
 .about-wrapper {
