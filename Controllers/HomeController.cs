@@ -19,14 +19,15 @@ namespace ChickenWeb.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm)
         {
-            // Fetches menu items from the service
-            var menuItems = await _context.GetMenuItems();
+            var menuItems = await _context.GetMenuItems(searchTerm);
+            ViewData["CurrentFilter"] = searchTerm;
             return View(menuItems);
         }
 
-      
+
+
         public IActionResult Order()
         {
             return View();

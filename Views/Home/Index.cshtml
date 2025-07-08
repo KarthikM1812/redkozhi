@@ -13,6 +13,19 @@
     </div>
 </div>
 
+
+@* Search bar *@
+<form asp-action="Index" method="get" class="d-flex mb-4 px-3">
+    <input type="text" name="searchTerm" class="form-control me-2" placeholder="Search menu..." value="@ViewData["CurrentFilter"]" />
+    <button type="submit" class="btn btn-danger">Search</button>
+</form>
+@if (!string.IsNullOrEmpty(ViewData["CurrentFilter"] as string))
+    {
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">Clear</a>
+    }
+</form>
+
+
 <!--  Grid Menu Section -->
 <section id="menu" class="menu-grid-section">
     <h2 class="heading"> Our Delicious Menu</h2>

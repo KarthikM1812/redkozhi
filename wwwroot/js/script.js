@@ -182,6 +182,16 @@ $(document).ready(function () {
     updateUI();
     renderCartCount();
 
+//Search bar-back to Index Menu
+    const searchInput = document.querySelector('input[name="searchTerm"]');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            if (searchInput.value.trim() === '') {
+                window.location.href = '/Home/Index';
+            }
+        });
+    }
+
     // Handle order submission
     $('#orderForm').submit(function (e) {
         e.preventDefault();
