@@ -65,7 +65,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession(); // Important: after routing, before endpoints
+app.UseSession(); 
 
 // Routing
 app.MapControllerRoute(

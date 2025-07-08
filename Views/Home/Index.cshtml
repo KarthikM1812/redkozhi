@@ -4,7 +4,7 @@
     ViewData["Title"] = "Our Menu";
 }
 
-<!-- ✅ Hero Section -->
+<!--  Hero Section -->
 <div class="menu-hero">
     <div class="hero-content">
         <h1>Welcome to The Crispy Coop</h1>
@@ -13,8 +13,8 @@
     </div>
 </div>
 
-<!-- ✅ Grid Menu Section -->
-<section class="menu-grid-section">
+<!--  Grid Menu Section -->
+<section id="menu" class="menu-grid-section">
     <h2 class="heading"> Our Delicious Menu</h2>
 
     <div class="menu-grd">
@@ -24,7 +24,7 @@
                  data-name="@item.Name"
                  data-price="@item.Price"
                  data-stock="@item.QuantityAvailable">
-                <!-- ✅ Corrected -->
+                <!--  Corrected -->
 
                 <img src="@item.Image" alt="@item.Name" class="m-img" />
                 <div class="m-info">
@@ -42,7 +42,7 @@
     </div>
 </section>
 
-<!-- ✅ Scrolling Snacks Section -->
+<!-- Scrolling Snacks Section -->
 <div class="scroll-section d-flex overflow-auto p-3 bg-light" style="gap: 1rem;">
     @foreach (var item in Model.Where(m => m.Type?.ToLower() == "snack"))
     {

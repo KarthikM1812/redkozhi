@@ -19,8 +19,8 @@ body {
 
 .brand {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: #d00000 !important;
+    font-weight: 600;
+    color: white;
     text-decoration: none;
 }
 
@@ -35,7 +35,7 @@ body {
 
 .nav-link {
     font-weight: 600;
-    color: blanchedalmond;
+    color: white;
     transition: color 0.3s ease;
     text-decoration: none;
 }
@@ -509,6 +509,16 @@ body {
 
     .scroll-section:active {
         cursor: grabbing;
+    }
+.logout-button {
+    color: white;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+    .logout-button:hover {
+        color: red !important;
     }
 
 

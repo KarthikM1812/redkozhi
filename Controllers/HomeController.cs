@@ -21,11 +21,12 @@ namespace ChickenWeb.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // Fetches menu items from the service
             var menuItems = await _context.GetMenuItems();
             return View(menuItems);
         }
 
-        [Authorize]
+      
         public IActionResult Order()
         {
             return View();
@@ -42,12 +43,15 @@ namespace ChickenWeb.Controllers
             try
             {
                 var userEmail = User.Identity?.Name ?? "Guest";
+
+                // Submit the order to the service layer
                 var groupKey = Guid.NewGuid().ToString();
                 var createdAt = DateTime.Now;
 
+                // Submit the order to the service layer
                 await _context.SubmitOrderAsync(request, userEmail, groupKey, createdAt);
 
-                // ✅ Return the redirect URL back to JavaScript
+                // Return the redirect URL back to JavaScript
                 return Ok(new
                 {
                     redirectUrl = Url.Action("OrderSummary", "Home", new { orderId = groupKey })
@@ -68,11 +72,13 @@ namespace ChickenWeb.Controllers
         {
             var userEmail = User.Identity?.Name ?? "Guest";
 
+            // Get all order items related to this group key
             var items = await _context.GetOrderItemsByGroupKey(orderId);
 
             if (items == null || !items.Any())
                 return Content("No recent orders found."); // Fallback message
 
+           // Prepare view model to display summary
             var model = new OrderSummary
             {
                 Name = items.First().Name,

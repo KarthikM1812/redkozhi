@@ -59,12 +59,6 @@ function updateUI() {
     });
 }
 
-// Update cart count in header
-function renderCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const span = document.getElementById('cart-count');
-    if (span) span.textContent = count;
-}
 
 // Add to cart from menu grid
 $(document).on('click', '.m-btn', function () {
@@ -145,6 +139,32 @@ $(document).on('click', '.scroll-section .add-to-cart', function () {
     renderCartCount();
     showBanner(`${name} added to cart`, "success");
 });
+
+//For card it shows to login user tried to view card
+function handleCartClick() {
+    const isLoggedIn = document.querySelector('meta[name="user-authenticated"]')?.content === "true";
+
+    if (isLoggedIn) {
+        window.location.href = "/Home/Order";
+    } else {
+        showLoginAlert("⚠️ Please log in to access your cart.");
+    }
+}
+
+function showLoginAlert(message) {
+    const banner = document.getElementById("alertBanner");
+    if (!banner) return;
+
+    banner.textContent = message;
+    banner.className = "alert alert-warning text-center";
+    banner.classList.remove("d-none");
+
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+        banner.classList.add("d-none");
+    }, 3000);
+}
+
 
 // Remove item from cart
 $(document).on('click', '.remove-btn', function () {
